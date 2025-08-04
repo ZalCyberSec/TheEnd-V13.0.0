@@ -1,0 +1,177 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The End Evolution</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+    body {
+      background: url("https://files.catbox.moe/h49qok.jpg") no-repeat center center/cover;
+      background-attachment: fixed;
+      color: silver;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+    .panel {
+      background: rgba(0, 0, 0, 0.75);
+      border: 1px solid silver;
+      border-radius: 16px;
+      padding: 30px;
+      width: 340px;
+      text-align: center;
+      box-shadow: 0 0 20px #999;
+      display: none;
+    }
+    h2 { color: #fff; text-shadow: 0 0 8px #ccc, 0 0 20px #aaa; margin-bottom: 20px; }
+    input, select {
+      width: 100%; padding: 10px; margin: 10px 0;
+      border-radius: 8px; border: none;
+      background: #1b1b1b; color: #eee;
+      text-align: center;
+    }
+    button {
+      padding: 10px; width: 100%; margin-top: 10px;
+      border: none; border-radius: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff; font-weight: bold;
+      cursor: pointer; transition: 0.3s ease;
+      box-shadow: 0 0 10px rgba(255,255,255,0.3);
+    }
+    button:hover {
+      background: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 0 20px rgba(255,255,255,0.6);
+    }
+    .status { margin-top: 15px; font-size: 14px; color: #eee; }
+  </style>
+</head>
+<body>
+  <!-- Login Panel -->
+  <div class="panel" id="loginPanel" style="display: block;">
+    <h2>Login with WhatsApp Number</h2>
+    <input type="text" id="number" placeholder="Ex: 628xxx">
+    <button onclick="handleLogin()">Login</button>
+    <div id="loginError" style="color: red; font-size: 12px; margin-top: 10px;"></div>
+  </div>  <!-- Menu Panel -->  <div class="panel" id="menuPanel">
+    <h2>𒑡 Press Button ៚</h2>
+    <button onclick="showPanel('exec')">⚔ Eksekusi Target</button>
+    <button onclick="showPanel('setting')">⚙ Setting Panel</button>
+    <button onclick="logout()">Logout</button>
+  </div>  <!-- Eksekusi Panel -->  <div class="panel" id="execPanel">
+    <h2>⚔ Eksekusi Target</h2>
+    <input type="text" id="targetNumber" placeholder="Target Number ex: 628xxx">
+    <select id="bugType">
+      <option value="forclose">Forclose</option>
+      <option value="delay">Delay Invisible</option>
+      <option value="sedot">Sedot Kuota</option>
+      <option value="blank">Blank Click</option>
+    </select>
+    <button onclick="sendBugToTarget()">Kirim Bug</button>
+    <button onclick="backToMenu()">Logout</button>
+  </div>  <!-- Setting Panel -->  <div class="panel" id="settingPanel">
+    <h2>⚙ Setting Panel</h2>
+    <div class="status">Pairing Code: <b>THEEND13</b></div>
+    <input type="text" id="pairTarget" placeholder="Nomor untuk Pairing ex: 628xxx">
+    <button onclick="pairBot()">Get Code</button>
+    <button onclick="clearSession()">Hapus Session</button>
+    <button onclick="restartPanel()">Restart Panel</button>
+    <button onclick="backToMenu()">Logout</button>
+    <div class="status" id="pairStatus">Server: Not Connected ❌</div>
+  </div><script>
+  let currentNumber = "";
+
+  function handleLogin() {
+    const number = document.getElementById("number").value.trim();
+    const allowedNumbers = ["6285133162466", "6289524134626"];
+    if (!allowedNumbers.includes(number)) {
+      document.getElementById("loginError").innerText = "Unauthorized number.";
+      return;
+    }
+    currentNumber = number;
+    document.getElementById("loginPanel").style.display = "none";
+    document.getElementById("menuPanel").style.display = "block";
+  }
+
+  function showPanel(panel) {
+    document.getElementById("menuPanel").style.display = "none";
+    if (panel === 'exec') document.getElementById("execPanel").style.display = "block";
+    else if (panel === 'setting') document.getElementById("settingPanel").style.display = "block";
+  }
+
+  function backToMenu() {
+    document.getElementById("execPanel").style.display = "none";
+    document.getElementById("settingPanel").style.display = "none";
+    document.getElementById("menuPanel").style.display = "block";
+  }
+
+  function logout() {
+    location.reload();
+  }
+
+  function sendBugToTarget() {
+    const target = document.getElementById("targetNumber").value.trim();
+    const type = document.getElementById("bugType").value;
+    if (!target) return alert("Isi nomor target dulu!");
+    fetch(`/api/bug/${type}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ number: target })
+    })
+    .then(res => res.json())
+    .then(data => alert(data.message))
+    .catch(() => alert("Gagal kirim bug."));
+  }
+
+function pairBot() {
+  const target = document.getElementById("pairTarget").value.trim();
+  if (!target) return alert("Isi nomor dulu!");
+
+  fetch("/api/pair", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      number: target,
+      code: "THEEND13"
+    })
+  })
+  .then(res => {
+    if (!res.ok) throw new Error("Pairing gagal");
+    return res.json();
+  })
+  .then(data => {
+    document.getElementById("pairStatus").innerHTML = "Server: <span style='color:lime;'>Connected ✅</span>";
+    alert("📲 Kode Pairing WA:\n" + data.code + "\n\nSilakan buka WhatsApp target, klik 'Tautkan Perangkat', lalu masukkan kode di atas.");
+  })
+  .catch(() => alert("Pairing gagal. Kode mungkin salah."));
+}
+
+  function clearSession() {
+    fetch("/api/unpair", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ number: currentNumber })
+    })
+    .then(res => res.json())
+    .then(data => {
+      alert(data.message);
+      document.getElementById("pairStatus").innerHTML = "Server: Not Connected ❌";
+    })
+    .catch(() => alert("Gagal hapus session."));
+  }
+
+  function restartPanel() {
+    fetch("/api/restart-panel", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ number: currentNumber })
+    })
+    .then(res => res.json())
+    .then(data => alert(data.message))
+    .catch(() => alert("Restart gagal."));
+  }
+</script>
+</body>
+</html>
